@@ -14,38 +14,27 @@ export class UserService {
         role: string
         efficiency: number
     }) {
-        try {
-            const full_name = data.full_name.trim() // убрал ненужные символы
-            const role = data.role.trim() // убрал ненужные символы
-            const user = await this.prisma.user.create({
-                data: { ...data, full_name, role },
-            })
-            return { success: true, result: { id: user.id } }
-        } catch (error) {
-            return { success: false, result: { error: error.message } }
-        }
+        const full_name = data.full_name.trim() // убрал ненужные символы
+        const role = data.role.trim() // убрал ненужные символы
+        return await this.prisma.user.create({
+            data: { ...data, full_name, role },
+        })
     }
 
     async getUser(id?: number, role?: string, full_name?: string) {
-        try {
-            const where: any = {}
-            if (id) where.id = id
-            if (role) where.role = role
-            if (full_name) where.full_name = full_name
+        const where: any = {}
+        if (id) where.id = id
+        if (role) where.role = role
+        if (full_name) where.full_name = full_name
 
-            const users = await this.prisma.user.findMany({ where })
+        const users = await this.prisma.user.findMany({ where })
+        console.log(users)
 
-            if (users.length === 0) {
-                return {
-                    success: false,
-                    result: { error: 'User(s) not found' },
-                }
-            }
-
-            return { success: true, result: { users } }
-        } catch (error) {
-            return { success: false, result: { error: error.message } }
+        if (users.length === 0) {
+            throw new NotFoundException('User(s) not found')
         }
+
+        return users
     }
 
     // Метод для обновления пользователя
@@ -53,51 +42,39 @@ export class UserService {
         id: number,
         data: { full_name?: string; role?: string; efficiency?: number }
     ) {
-        try {
-            const userExist = await this.prisma.user.findFirst({
-                where: { id },
-            })
+        const userExist = await this.prisma.user.findFirst({
+            where: { id },
+        })
 
-            if (!userExist) {
-                throw new NotFoundException(`user with id ${id} was not found`)
-            }
-
-            const full_name = data.full_name.trim() // убрал ненужные символы
-            const role = data.role.trim() // убрал ненужные символы
-
-            const user = await this.prisma.user.update({
-                where: { id },
-                data: { ...data, full_name, role },
-            })
-            return { success: true, result: user }
-        } catch (error) {
-            return { success: false, result: { error: error.message } }
+        if (!userExist) {
+            throw new NotFoundException(`user with id ${id} was not found`)
         }
+
+        const full_name = data.full_name.trim() // убрал ненужные символы
+        const role = data.role.trim() // убрал ненужные символы
+
+        return await this.prisma.user.update({
+            where: { id },
+            data: { ...data, full_name, role },
+        })
     }
 
     // Метод для удаления пользователя
     async deleteUser(id?: number) {
-        try {
-            if (id) {
-                const userExist = await this.prisma.user.findFirst({
+        if (id) {
+            const userExist = await this.prisma.user.findFirst({
+                where: { id },
+            })
+            if (userExist) {
+                return await this.prisma.user.delete({
                     where: { id },
                 })
-                if (userExist) {
-                    const user = await this.prisma.user.delete({
-                        where: { id },
-                    })
-                    return { success: true, result: user }
-                } else {
-                    throw new NotFoundException(
-                        `user with id ${id} was not found`
-                    )
-                }
             } else {
-                await this.prisma.user.deleteMany()
-                return { success: true }
+                throw new NotFoundException(`user with id ${id} was not found`)
             }
-        } catch (error) {
-            return { success: false, result: { error: error.message } }
+        } else {
+            await this.prisma.user.deleteMany()
+            return
         }
     }
 }
