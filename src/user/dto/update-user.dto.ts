@@ -1,12 +1,4 @@
-import {
-    IsNotEmpty,
-    IsString,
-    IsNumber,
-    Min,
-    Max,
-    Length,
-    IsOptional,
-} from 'class-validator'
+import { IsNotEmpty, IsString, IsNumber, Min, Max, Length, IsOptional } from 'class-validator'
 
 export class UpdateUserDto {
     @IsOptional()
